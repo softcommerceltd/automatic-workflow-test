@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - "main"
-permissions: read-all|write-all
 
 jobs:
   pre-release:
