@@ -1,5 +1,5 @@
 {
-    "name": "softcommerce/module-h2h-theme",
+    "name": "softcommerce/automatic-workflow-test",
     "description": "Hair2Heart module that extends functionality of PlentyMarkets connector.",
     "require": {
         "php": "~8.0.0||~8.1.0||~8.2.0",
@@ -15,5 +15,5 @@
             "SoftCommerce\\H2hTheme\\": ""
         }
     },
-    "version": "1.0.13"
+    "version": "1.0.14"
 }
