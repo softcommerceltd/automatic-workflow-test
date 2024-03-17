@@ -1,6 +1,6 @@
 ## Changelog
 
-### Version 1.0.25
+### Version 1.0.26
 - **Feature**: New feature test
 
 ### Version 1.0.17
