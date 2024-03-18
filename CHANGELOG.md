@@ -1,7 +1,8 @@
 ## Changelog
 
-### Version 1.0.26
+### Version 1.0.27
 - **Feature**: New feature test
+- **Fix**: A fix for xxx
 
 ### Version 1.0.17
 - **Feature**: New feature test
