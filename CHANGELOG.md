@@ -1,6 +1,6 @@
 ## Changelog
 
-### Version 1.0.27
+### Version 1.0.30
 - **Feature**: New feature test
 - **Fix**: A fix for xxx
 
