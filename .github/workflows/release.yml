@@ -5,6 +5,8 @@ on:
     branches:
       - main
       - master
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 permissions:
@@ -21,7 +23,22 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      # Handle tag push (from multi-repo-release script)
+      - name: Check if tag push
+        id: check_tag
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            echo "is_tag=true" >> $GITHUB_OUTPUT
+            echo "tag_name=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+            echo "Tag push detected: ${GITHUB_REF#refs/tags/}"
+          else
+            echo "is_tag=false" >> $GITHUB_OUTPUT
+            echo "Branch push detected"
+          fi
+
+      # For branch pushes, check for changes since last tag
       - name: Check for changes
+        if: steps.check_tag.outputs.is_tag != 'true'
         id: changes
         run: |
           # Get last tag
@@ -43,8 +60,9 @@ jobs:
             echo "$COMMITS"
           fi
 
+      # Only run version determination for branch pushes
       - name: Determine version bump
-        if: steps.changes.outputs.has_changes == 'true'
+        if: steps.check_tag.outputs.is_tag != 'true' && steps.changes.outputs.has_changes == 'true'
         id: version
         run: |
           # Get current version from composer.json
@@ -89,8 +107,9 @@ jobs:
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "version_type=$VERSION_TYPE" >> $GITHUB_OUTPUT
 
+      # Only update version for branch pushes
       - name: Update version
-        if: steps.changes.outputs.has_changes == 'true'
+        if: steps.check_tag.outputs.is_tag != 'true' && steps.changes.outputs.has_changes == 'true'
         run: |
           # Update composer.json
           jq --arg version "${{ steps.version.outputs.new_version }}" \
@@ -104,18 +123,48 @@ jobs:
           # Commit version change
           git add composer.json
           git commit -m "chore(release): ${{ steps.version.outputs.new_version }}"
-
-      - name: Create release
-        if: steps.changes.outputs.has_changes == 'true'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PACKAGE_NAME: ${{ github.repository }}
-        run: |
-          VERSION="${{ steps.version.outputs.new_version }}"
           
           # Create and push tag
-          git tag -a "v${VERSION}" -m "Release v${VERSION}"
-          git push origin main --follow-tags
+          git tag -a "v${{ steps.version.outputs.new_version }}" -m "Release v${{ steps.version.outputs.new_version }}"
+          git push origin HEAD:main --follow-tags
+
+      # Create release for tag pushes (from multi-repo-release)
+      - name: Create release from tag
+        if: steps.check_tag.outputs.is_tag == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG_NAME="${{ steps.check_tag.outputs.tag_name }}"
+          VERSION="${TAG_NAME#v}"
+          
+          # Get the previous tag
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 ${TAG_NAME}^ 2>/dev/null || echo "")
+          
+          # Generate changelog
+          if [ -z "$PREVIOUS_TAG" ]; then
+            CHANGELOG=$(git log ${TAG_NAME} --pretty=format:"- %s" -10)
+          else
+            CHANGELOG=$(git log ${PREVIOUS_TAG}..${TAG_NAME} --pretty=format:"- %s")
+          fi
+          
+          # Create GitHub release
+          gh release create "${TAG_NAME}" \
+            --title "${TAG_NAME}" \
+            --notes "## Changes
+
+${CHANGELOG}
+
+---
+
+**Full Changelog**: https://github.com/${{ github.repository }}/compare/${PREVIOUS_TAG}...${TAG_NAME}"
+
+      # Create release for branch pushes
+      - name: Create release from branch
+        if: steps.check_tag.outputs.is_tag != 'true' && steps.changes.outputs.has_changes == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.version.outputs.new_version }}"
           
           # Generate changelog
           LAST_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
@@ -128,4 +177,10 @@ jobs:
           # Create GitHub release
           gh release create "v${VERSION}" \
             --title "v${VERSION}" \
-            --notes "## Changes\n\n${CHANGELOG}\n\n---\n\n**Full Changelog**: https://github.com/${{ github.repository }}/compare/${LAST_TAG}...v${VERSION}"
+            --notes "## Changes
+
+${CHANGELOG}
+
+---
+
+**Full Changelog**: https://github.com/${{ github.repository }}/compare/${LAST_TAG}...v${VERSION}"
