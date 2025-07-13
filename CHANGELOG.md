@@ -1,5 +1,7 @@
 ## Changelog
 
+## [1.7.7] - 2025-07-13
+
 ## [1.7.6] - 2025-07-13
 ### Changed
 - Merge branch 'main' of github.com:softcommerceltd/automatic-workflow-test
