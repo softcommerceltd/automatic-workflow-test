@@ -1,6 +1,6 @@
 {
     "name": "softcommerce/automatic-workflow-test",
-    "description": "Hair2Heart module that extends functionality of PlentyMarkets connector.",
+    "description": "Hair2Heart module that extends functionality of PlentyONE connector.",
     "require": {
         "php": "~8.0.0||~8.1.0||~8.2.0||~8.3.0||~8.4.0",
         "magento/module-store": "*"

@@ -1,1 +1,4 @@
 /.idea
+# Workflow
+node_modules/
+.husky/_/
