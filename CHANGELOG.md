@@ -1,4 +1,6 @@
-# Changelog
+## Changelog
+
+## [1.7.2] - 2025-07-13
 
 <<<<<<< HEAD
 All notable changes to this project will be documented in this file.
