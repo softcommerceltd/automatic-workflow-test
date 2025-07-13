@@ -1,5 +1,9 @@
 ## Changelog
 
+### Version 1.7.0
+- **Feature**: add automated changelog generation
+
+
 ### Version 1.0.33
 - **Feature**: New feature test
 - **Fix**: A fix for xxx
