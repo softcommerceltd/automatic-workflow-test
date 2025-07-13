@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.8.1] - 2025-07-13
+### Fixed
+- apply a fix to flow3
+
 ## [1.8.0] - 2025-07-13
 ### Added
 - add new test feature for changelog aggregation
