@@ -47,23 +47,72 @@ jobs:
         id: changelog
         run: |
           TAG_NAME="${{ steps.version.outputs.tag_name }}"
+          VERSION="${{ steps.version.outputs.version }}"
           
           # Get the previous tag
           PREVIOUS_TAG=$(git describe --tags --abbrev=0 ${TAG_NAME}^ 2>/dev/null || echo "")
           
-          # Generate changelog
+          # Generate changelog entries
           if [ -z "$PREVIOUS_TAG" ]; then
             echo "No previous tag found, including last 10 commits"
-            CHANGELOG=$(git log ${TAG_NAME} --pretty=format:"- %s" -10)
+            COMMITS=$(git log ${TAG_NAME} --pretty=format:"%s" -10)
           else
             echo "Previous tag: ${PREVIOUS_TAG}"
-            CHANGELOG=$(git log ${PREVIOUS_TAG}..${TAG_NAME} --pretty=format:"- %s")
+            COMMITS=$(git log ${PREVIOUS_TAG}..${TAG_NAME} --pretty=format:"%s")
           fi
           
-          # Save changelog to file for gh release
+          # Categorize commits
+          FEATURES=""
+          FIXES=""
+          BREAKING=""
+          OTHER=""
+          
+          while IFS= read -r commit; do
+            if [[ "$commit" =~ ^feat(\(.*\))?!?:[[:space:]](.*)$ ]] || [[ "$commit" =~ BREAKING[[:space:]]CHANGE ]]; then
+              if [[ "$commit" =~ ! ]] || [[ "$commit" =~ BREAKING[[:space:]]CHANGE ]]; then
+                BREAKING="${BREAKING}- **Breaking**: ${BASH_REMATCH[2]:-$commit}\n"
+              else
+                FEATURES="${FEATURES}- **Feature**: ${BASH_REMATCH[2]:-$commit}\n"
+              fi
+            elif [[ "$commit" =~ ^fix(\(.*\))?:[[:space:]](.*)$ ]]; then
+              FIXES="${FIXES}- **Fix**: ${BASH_REMATCH[2]}\n"
+            elif [[ "$commit" =~ ^(chore|docs|style|refactor|perf|test)(\(.*\))?:[[:space:]](.*)$ ]]; then
+              # Skip these for changelog
+              continue
+            else
+              OTHER="${OTHER}- ${commit}\n"
+            fi
+          done <<< "$COMMITS"
+          
+          # Update CHANGELOG.md
+          if [ -f "CHANGELOG.md" ]; then
+            # Create new changelog entry
+            echo -e "\n### Version ${VERSION}" > new_changelog_entry.md
+            [ -n "$BREAKING" ] && echo -e "$BREAKING" | sed 's/\\n$//' >> new_changelog_entry.md
+            [ -n "$FEATURES" ] && echo -e "$FEATURES" | sed 's/\\n$//' >> new_changelog_entry.md
+            [ -n "$FIXES" ] && echo -e "$FIXES" | sed 's/\\n$//' >> new_changelog_entry.md
+            [ -n "$OTHER" ] && echo -e "$OTHER" | sed 's/\\n$//' >> new_changelog_entry.md
+            
+            # Insert after the ## Changelog line
+            awk '/^## Changelog/ {print; print ""; system("cat new_changelog_entry.md"); next} 1' CHANGELOG.md > CHANGELOG.tmp
+            mv CHANGELOG.tmp CHANGELOG.md
+            rm new_changelog_entry.md
+            
+            # Commit the updated changelog
+            git config --global user.email "ci@softcommerce.com"
+            git config --global user.name "SoftCommerce CI"
+            git add CHANGELOG.md
+            git commit -m "docs: update CHANGELOG.md for v${VERSION}" || echo "No changes to commit"
+            git push origin HEAD:main || echo "Failed to push changelog update"
+          fi
+          
+          # Generate release notes for GitHub
           echo "## Changes" > release_notes.md
           echo "" >> release_notes.md
-          echo "$CHANGELOG" >> release_notes.md
+          [ -n "$BREAKING" ] && echo -e "### Breaking Changes\n$BREAKING" >> release_notes.md
+          [ -n "$FEATURES" ] && echo -e "### Features\n$FEATURES" >> release_notes.md
+          [ -n "$FIXES" ] && echo -e "### Bug Fixes\n$FIXES" >> release_notes.md
+          [ -n "$OTHER" ] && echo -e "### Other Changes\n$OTHER" >> release_notes.md
           echo "" >> release_notes.md
           echo "---" >> release_notes.md
           echo "" >> release_notes.md
