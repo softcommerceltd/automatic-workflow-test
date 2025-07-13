@@ -1,5 +1,10 @@
 ## Changelog
 
+
+### Version 1.7.4
+- chor: Test some changes
+
+
 ## [1.7.4] - 2025-07-13
 
 
