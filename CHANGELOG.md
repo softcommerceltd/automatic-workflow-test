@@ -1,41 +1,31 @@
-## Changelog
+# Changelog
 
-## [1.7.7] - 2025-07-13
-
-## [1.7.6] - 2025-07-13
-### Changed
-- Merge branch 'main' of github.com:softcommerceltd/automatic-workflow-test
-
-
-### Version 1.7.4
-- chor: Test some changes
-
-
-## [1.7.4] - 2025-07-13
-
-
-### Version 1.7.2
-
-## [1.7.2] - 2025-07-13
-
-<<<<<<< HEAD
 All notable changes to this project will be documented in this file.
-=======
-
-### Version 1.7.0
-- **Feature**: feat: add automated changelog generation
-
-
-### Version 1.7.0
-- **Feature**: add automated changelog generation
->>>>>>> 07d845bed9f5dd97d122733ceb9d1872fe5067c6
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-## [1.7.1] - 2025-07-13
+## [1.7.7] - 2025-01-13
+### Changed
+- Test deployment process
+
+## [1.7.6] - 2025-01-13
+### Changed
+- Merge branch 'main' of github.com:softcommerceltd/automatic-workflow-test
+
+## [1.7.4] - 2025-01-13
+### Changed
+- Test some changes
+
+## [1.7.2] - 2025-01-13
+### Added
+- Automated release process improvements
+
+## [1.7.1] - 2025-01-13
+### Fixed
+- Various improvements to release workflow
 
 ## [1.7.0] - 2025-01-13
 ### Added
@@ -93,7 +83,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial release
 - Module to handle test project customization
 
-[Unreleased]: https://github.com/softcommerceltd/automatic-workflow-test/compare/v1.7.0...HEAD
+[Unreleased]: https://github.com/softcommerceltd/automatic-workflow-test/compare/v1.7.7...HEAD
+[1.7.7]: https://github.com/softcommerceltd/automatic-workflow-test/compare/v1.7.6...v1.7.7
+[1.7.6]: https://github.com/softcommerceltd/automatic-workflow-test/compare/v1.7.4...v1.7.6
+[1.7.4]: https://github.com/softcommerceltd/automatic-workflow-test/compare/v1.7.2...v1.7.4
+[1.7.2]: https://github.com/softcommerceltd/automatic-workflow-test/compare/v1.7.1...v1.7.2
+[1.7.1]: https://github.com/softcommerceltd/automatic-workflow-test/compare/v1.7.0...v1.7.1
 [1.7.0]: https://github.com/softcommerceltd/automatic-workflow-test/compare/v1.6.4...v1.7.0
 [1.6.4]: https://github.com/softcommerceltd/automatic-workflow-test/compare/v1.6.3...v1.6.4
 [1.6.3]: https://github.com/softcommerceltd/automatic-workflow-test/compare/v1.6.2...v1.6.3
