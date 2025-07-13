@@ -150,13 +150,7 @@ jobs:
           # Create GitHub release
           gh release create "${TAG_NAME}" \
             --title "${TAG_NAME}" \
-            --notes "## Changes
-
-${CHANGELOG}
-
----
-
-**Full Changelog**: https://github.com/${{ github.repository }}/compare/${PREVIOUS_TAG}...${TAG_NAME}"
+            --notes "$(echo -e "## Changes\n\n${CHANGELOG}\n\n---\n\n**Full Changelog**: https://github.com/${{ github.repository }}/compare/${PREVIOUS_TAG}...${TAG_NAME}")"
 
       # Create release for branch pushes
       - name: Create release from branch
@@ -177,10 +171,4 @@ ${CHANGELOG}
           # Create GitHub release
           gh release create "v${VERSION}" \
             --title "v${VERSION}" \
-            --notes "## Changes
-
-${CHANGELOG}
-
----
-
-**Full Changelog**: https://github.com/${{ github.repository }}/compare/${LAST_TAG}...v${VERSION}"
+            --notes "$(echo -e "## Changes\n\n${CHANGELOG}\n\n---\n\n**Full Changelog**: https://github.com/${{ github.repository }}/compare/${LAST_TAG}...v${VERSION}")"
