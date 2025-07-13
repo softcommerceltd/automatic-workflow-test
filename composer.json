@@ -1,19 +1,19 @@
 {
-    "name": "softcommerce/automatic-workflow-test",
-    "description": "Hair2Heart module that extends functionality of PlentyONE connector.",
-    "require": {
-        "php": "~8.0.0||~8.1.0||~8.2.0||~8.3.0||~8.4.0",
-        "magento/module-store": "*"
-    },
-    "type": "magento2-module",
-    "license": "Free",
-    "autoload": {
-        "files": [
-            "registration.php"
-        ],
-        "psr-4": {
-            "SoftCommerce\\H2hTheme\\": ""
-        }
-    },
-    "version": "1.0.33"
+  "name": "softcommerce/automatic-workflow-test",
+  "description": "Hair2Heart module that extends functionality of PlentyONE connector.",
+  "require": {
+    "php": "~8.0.0||~8.1.0||~8.2.0||~8.3.0||~8.4.0",
+    "magento/module-store": "*"
+  },
+  "type": "magento2-module",
+  "license": "Free",
+  "autoload": {
+    "files": [
+      "registration.php"
+    ],
+    "psr-4": {
+      "SoftCommerce\\H2hTheme\\": ""
+    }
+  },
+  "version": "1.1.0"
 }
