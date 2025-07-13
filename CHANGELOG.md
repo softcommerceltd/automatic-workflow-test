@@ -1,5 +1,10 @@
 ## Changelog
 
+
+### Version 1.7.0
+- **Feature**: feat: add automated changelog generation
+
+
 ### Version 1.7.0
 - **Feature**: add automated changelog generation
 
