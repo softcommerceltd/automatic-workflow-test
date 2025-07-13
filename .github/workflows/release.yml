@@ -2,9 +2,6 @@ name: Release
 
 on:
   push:
-    branches:
-      - main
-      - master
     tags:
       - 'v*'
   workflow_dispatch:
@@ -23,152 +20,72 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      # Handle tag push (from multi-repo-release script)
-      - name: Check if tag push
-        id: check_tag
-        run: |
-          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            echo "is_tag=true" >> $GITHUB_OUTPUT
-            echo "tag_name=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-            echo "Tag push detected: ${GITHUB_REF#refs/tags/}"
-          else
-            echo "is_tag=false" >> $GITHUB_OUTPUT
-            echo "Branch push detected"
-          fi
-
-      # For branch pushes, check for changes since last tag
-      - name: Check for changes
-        if: steps.check_tag.outputs.is_tag != 'true'
-        id: changes
-        run: |
-          # Get last tag
-          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          
-          if [ -z "$LAST_TAG" ]; then
-            echo "No previous tags found"
-            COMMITS=$(git log --oneline -10)
-          else
-            echo "Last tag: $LAST_TAG"
-            COMMITS=$(git log ${LAST_TAG}..HEAD --oneline)
-          fi
-          
-          if [ -z "$COMMITS" ]; then
-            echo "has_changes=false" >> $GITHUB_OUTPUT
-          else
-            echo "has_changes=true" >> $GITHUB_OUTPUT
-            echo "Commits since last release:"
-            echo "$COMMITS"
-          fi
-
-      # Only run version determination for branch pushes
-      - name: Determine version bump
-        if: steps.check_tag.outputs.is_tag != 'true' && steps.changes.outputs.has_changes == 'true'
+      - name: Extract version from tag
         id: version
         run: |
-          # Get current version from composer.json
-          CURRENT_VERSION=$(jq -r '.version // "0.0.0"' composer.json)
-          echo "Current version: $CURRENT_VERSION"
-          
-          # Analyze commits
-          VERSION_TYPE="patch"
-          
-          # Get commits since last tag
-          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          if [ -z "$LAST_TAG" ]; then
-            COMMITS=$(git log --pretty=format:"%s" -10)
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            TAG_NAME=${GITHUB_REF#refs/tags/}
+            VERSION=${TAG_NAME#v}
+            echo "tag_name=${TAG_NAME}" >> $GITHUB_OUTPUT
+            echo "version=${VERSION}" >> $GITHUB_OUTPUT
+            echo "Creating release for tag: ${TAG_NAME}"
           else
-            COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"%s")
+            echo "Not a tag push, exiting"
+            exit 1
           fi
+
+      - name: Verify version matches composer.json
+        run: |
+          COMPOSER_VERSION=$(jq -r '.version // "0.0.0"' composer.json)
+          TAG_VERSION="${{ steps.version.outputs.version }}"
           
-          # Check for version indicators
-          if echo "$COMMITS" | grep -qE "(BREAKING CHANGE|!:)"; then
-            VERSION_TYPE="major"
-          elif echo "$COMMITS" | grep -qE "^feat(\(.*\))?:"; then
-            VERSION_TYPE="minor"
+          if [ "$COMPOSER_VERSION" != "$TAG_VERSION" ]; then
+            echo "WARNING: composer.json version ($COMPOSER_VERSION) doesn't match tag version ($TAG_VERSION)"
           fi
-          
-          echo "Version type: $VERSION_TYPE"
-          
-          # Calculate new version
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
-          
-          case $VERSION_TYPE in
-            major)
-              NEW_VERSION="$((MAJOR + 1)).0.0"
-              ;;
-            minor)
-              NEW_VERSION="${MAJOR}.$((MINOR + 1)).0"
-              ;;
-            patch)
-              NEW_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))"
-              ;;
-          esac
-          
-          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
-          echo "version_type=$VERSION_TYPE" >> $GITHUB_OUTPUT
 
-      # Only update version for branch pushes
-      - name: Update version
-        if: steps.check_tag.outputs.is_tag != 'true' && steps.changes.outputs.has_changes == 'true'
+      - name: Generate changelog
+        id: changelog
         run: |
-          # Update composer.json
-          jq --arg version "${{ steps.version.outputs.new_version }}" \
-            '.version = $version' composer.json > composer.tmp && \
-            mv composer.tmp composer.json
-          
-          # Configure git
-          git config --global user.email "ci@softcommerce.com"
-          git config --global user.name "SoftCommerce CI"
-          
-          # Commit version change
-          git add composer.json
-          git commit -m "chore(release): ${{ steps.version.outputs.new_version }}"
-          
-          # Create and push tag
-          git tag -a "v${{ steps.version.outputs.new_version }}" -m "Release v${{ steps.version.outputs.new_version }}"
-          git push origin HEAD:main --follow-tags
-
-      # Create release for tag pushes (from multi-repo-release)
-      - name: Create release from tag
-        if: steps.check_tag.outputs.is_tag == 'true'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          TAG_NAME="${{ steps.check_tag.outputs.tag_name }}"
-          VERSION="${TAG_NAME#v}"
+          TAG_NAME="${{ steps.version.outputs.tag_name }}"
           
           # Get the previous tag
           PREVIOUS_TAG=$(git describe --tags --abbrev=0 ${TAG_NAME}^ 2>/dev/null || echo "")
           
           # Generate changelog
           if [ -z "$PREVIOUS_TAG" ]; then
+            echo "No previous tag found, including last 10 commits"
             CHANGELOG=$(git log ${TAG_NAME} --pretty=format:"- %s" -10)
           else
+            echo "Previous tag: ${PREVIOUS_TAG}"
             CHANGELOG=$(git log ${PREVIOUS_TAG}..${TAG_NAME} --pretty=format:"- %s")
           fi
           
-          # Create GitHub release
-          gh release create "${TAG_NAME}" \
-            --title "${TAG_NAME}" \
-            --notes "$(echo -e "## Changes\n\n${CHANGELOG}\n\n---\n\n**Full Changelog**: https://github.com/${{ github.repository }}/compare/${PREVIOUS_TAG}...${TAG_NAME}")"
+          # Save changelog to file for gh release
+          echo "## Changes" > release_notes.md
+          echo "" >> release_notes.md
+          echo "$CHANGELOG" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "---" >> release_notes.md
+          echo "" >> release_notes.md
+          if [ -n "$PREVIOUS_TAG" ]; then
+            echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${PREVIOUS_TAG}...${TAG_NAME}" >> release_notes.md
+          else
+            echo "**Full Changelog**: https://github.com/${{ github.repository }}/commits/${TAG_NAME}" >> release_notes.md
+          fi
 
-      # Create release for branch pushes
-      - name: Create release from branch
-        if: steps.check_tag.outputs.is_tag != 'true' && steps.changes.outputs.has_changes == 'true'
+      - name: Create GitHub release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          VERSION="${{ steps.version.outputs.new_version }}"
+          TAG_NAME="${{ steps.version.outputs.tag_name }}"
           
-          # Generate changelog
-          LAST_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-          if [ -z "$LAST_TAG" ]; then
-            CHANGELOG=$(git log --pretty=format:"- %s" -10)
-          else
-            CHANGELOG=$(git log ${LAST_TAG}..HEAD --pretty=format:"- %s")
+          # Check if release already exists
+          if gh release view "${TAG_NAME}" &>/dev/null; then
+            echo "Release ${TAG_NAME} already exists, skipping"
+            exit 0
           fi
           
-          # Create GitHub release
-          gh release create "v${VERSION}" \
-            --title "v${VERSION}" \
-            --notes "$(echo -e "## Changes\n\n${CHANGELOG}\n\n---\n\n**Full Changelog**: https://github.com/${{ github.repository }}/compare/${LAST_TAG}...v${VERSION}")"
+          # Create release
+          gh release create "${TAG_NAME}" \
+            --title "${TAG_NAME}" \
+            --notes-file release_notes.md
