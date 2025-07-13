@@ -1,5 +1,10 @@
 ## Changelog
 
+
+### Version 1.7.6
+- Merge branch 'main' of github.com:softcommerceltd/automatic-workflow-test
+
+
 ## [1.7.6] - 2025-07-13
 ### Changed
 - Merge branch 'main' of github.com:softcommerceltd/automatic-workflow-test
