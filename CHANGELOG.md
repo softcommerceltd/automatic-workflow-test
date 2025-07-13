@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.9] - 2025-07-13
+### Fixed
+- apply a fix to flow
+
 ## [1.7.8] - 2025-07-13
 ### Fixed
 - dummy fix 13
