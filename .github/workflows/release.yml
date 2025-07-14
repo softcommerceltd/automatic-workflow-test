@@ -96,14 +96,8 @@ jobs:
               found { print }
             ' CHANGELOG.md > release_notes.md
             
-            # If we got content from CHANGELOG, add installation and links
+            # If we got content from CHANGELOG, just add the full changelog link
             if [ -s release_notes.md ]; then
-              echo "" >> release_notes.md
-              echo "## Installation" >> release_notes.md
-              echo "" >> release_notes.md
-              echo "\`\`\`bash" >> release_notes.md
-              echo "composer require ${{ github.repository }}:${VERSION}" >> release_notes.md
-              echo "\`\`\`" >> release_notes.md
               echo "" >> release_notes.md
               echo "---" >> release_notes.md
               echo "" >> release_notes.md
@@ -159,10 +153,7 @@ jobs:
             exit 0
           fi
           
-          # Get package name from composer.json
-          PACKAGE_NAME=$(jq -r '.name // "Package"' composer.json | sed 's/.*\///')
-          
-          # Create release with enhanced title
+          # Create release with "Release v1.2.3" format
           gh release create "${TAG_NAME}" \
-            --title "${PACKAGE_NAME} ${TAG_NAME}" \
+            --title "Release ${TAG_NAME}" \
             --notes-file release_notes.md
