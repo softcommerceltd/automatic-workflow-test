@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.8.3] - 2025-07-14
+### Fixed
+- mdoule fix 002
+
 ## [1.8.2] - 2025-07-14
 
 ## [1.8.1] - 2025-07-13
